@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Escape: ภารกิจลับป่วนสมอง</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Mitr', sans-serif; }
+        body { background-color: #1e1b4b; color: #e2e8f0; padding: 20px; line-height: 1.6; background-image: radial-gradient(#312e81 1px, transparent 1px); background-size: 20px 20px; }
+        .container { max-width: 900px; margin: 0 auto; display: none; }
+        
+        /* หน้าเลือกกลุ่ม */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e1b4b; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; background-image: radial-gradient(#312e81 1px, transparent 1px); background-size: 20px 20px; text-align: center;}
+        #login-screen h1 { color: #facc15; font-size: 45px; margin-bottom: 10px; text-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        #team-select { padding: 12px 20px; font-size: 18px; background: #312e81; color: #fff; border: 2px solid #6366f1; border-radius: 8px; margin-bottom: 30px; cursor: pointer; outline: none; font-weight: 500;}
+        
+        header { text-align: center; margin-bottom: 30px; border-bottom: 2px dashed #4338ca; padding-bottom: 20px; position: relative; }
+        h1 { color: #38bdf8; margin-bottom: 10px; font-size: 32px; }
+        .subtitle { color: #94a3b8; font-size: 16px; }
+        
+        .timer-box { position: absolute; right: 0; top: 10px; background: #be123c; color: white; padding: 8px 20px; border-radius: 8px; font-size: 24px; font-weight: bold; border: 2px solid #fb7185; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        .phase { background: #2e1065; border: 2px solid #4c1d95; border-radius: 12px; padding: 25px; margin-bottom: 25px; position: relative; transition: all 0.4s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .phase.locked { filter: blur(4px) grayscale(80%); pointer-events: none; opacity: 0.5; }
+        .phase.completed { border-color: #10b981; background: #064e3b; }
+        
+        .phase-title { font-size: 20px; font-weight: 600; color: #fde047; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        
+        .story-text { color: #e2e8f0; margin-bottom: 20px; font-size: 16px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8; }
+
+        .input-group { display: flex; gap: 10px; align-items: center; margin-top: 15px; flex-wrap: wrap; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; }
+        .input-group.column-mobile { align-items: flex-start; }
+        input[type="number"], input[type="text"] { padding: 10px; font-size: 18px; border: 2px solid #6366f1; background: #fff; color: #1e1b4b; border-radius: 6px; width: 90px; text-align: center; font-weight: bold; }
+        input[type="number"]:focus { outline: none; border-color: #facc15; }
+        
+        .btn { padding: 10px 20px; font-size: 16px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-hack { background-color: #38bdf8; color: #0f172a; }
+        .btn-hack:hover { background-color: #0ea5e9; transform: translateY(-2px); }
+        .btn-start { background-color: #10b981; color: #fff; font-size: 20px; padding: 15px 40px; border-radius: 30px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+        .btn-start:hover { background-color: #059669; transform: scale(1.05); }
+        .btn-build { background-color: #f59e0b; color: #fff; width: 100%; margin-bottom: 15px; font-size: 16px; }
+        .btn-build:hover { background-color: #d97706; }
+
+        .feedback { margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 15px; display: none; font-weight: 500; }
+        .feedback.error { background: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444; }
+        .feedback.success { background: #f0fdf4; color: #166534; border-left: 4px solid #10b981; }
+
+        .wall-simulator { background: #0f172a; border-radius: 8px; padding: 20px; display: flex; flex-direction: column-reverse; justify-content: flex-start; min-height: 150px; max-height: 400px; overflow-x: auto; overflow-y: auto; margin-bottom: 15px; position: relative; }
+        .brick-row { display: flex; justify-content: center; gap: 2px; margin-top: 2px; width: 100%; min-width: max-content; }
+        .brick { background: #d97706; height: 12px; width: 16px; border-radius: 2px; flex-shrink: 0; }
+        .overload-warning { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; color: #dc2626; padding: 15px 25px; font-size: 18px; font-weight: bold; border-radius: 8px; text-align: center; display: none; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 2px solid #dc2626; width: 90%; max-width: 400px; }
+
+        .visualizer { margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; display: none; }
+        .bar-container { background: #334155; height: 28px; border-radius: 6px; margin-top: 10px; position: relative; overflow: hidden; }
+        .bar-fill { height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; font-size: 13px; font-weight: bold; color: #fff; }
+
+        /* =========================================
+           ระบบปรับหน้าจออัตโนมัติ (Responsive Design)
+           
+           ========================================= */
+        @media (max-width: 768px) {
+            body { padding: 10px; background-size: 15px 15px; }
+            #login-screen h1 { font-size: 34px; }
+            #team-select { font-size: 16px; width: 80%; max-width: 300px; }
+            .btn-start { font-size: 18px; padding: 12px 30px; }
+            
+            /* จัดการหัวข้อและเวลาไม่ให้ซ้อนทับกันบนจอมือถือ */
+            header { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+            h1 { font-size: 24px; text-align: center; line-height: 1.3; }
+            .subtitle { font-size: 14px; text-align: center; margin-bottom: 15px; }
+            .timer-box { position: static; width: fit-content; font-size: 20px; padding: 8px 20px; margin: 0 auto; margin-bottom: 10px; }
+            
+            /* ปรับขนาดเนื้อหาภายในด่านต่างๆ */
+            .phase { padding: 15px; }
+            .phase-title { font-size: 18px; }
+            .story-text { font-size: 14px; padding: 12px; }
+            
+            /* ปรับช่องกรอกข้อมูลและปุ่มให้กดยากง่ายบนจอมือถือ */
+            .input-group { flex-direction: column; align-items: stretch; gap: 10px; text-align: center; }
+            .input-group.column-mobile div { text-align: left; width: 100%; }
+            input[type="number"], input[type="text"] { width: 80px; padding: 8px; margin: 5px; }
+            
+            .btn-hack { width: 100%; margin-top: 10px; padding: 12px; font-size: 16px; margin-left: 0 !important; }
+            .btn-build { padding: 12px; font-size: 15px; }
+            
+            .overload-warning { font-size: 15px; padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <h1>MATH ESCAPE</h1>
+    <p style="color: #94a3b8; font-size: 16px; margin-bottom: 25px;">พร้อมลุยหรือยัง? เลือกกลุ่มของพวกเธอได้เลย!</p>
+    <select id="team-select">
+        <option value="team1">กลุ่มที่ 1</option>
+        <option value="team2">กลุ่มที่ 2</option>
+        <option value="team3">กลุ่มที่ 3</option>
+        <option value="team4">กลุ่มที่ 4</option>
+        <option value="team5">กลุ่มที่ 5</option>
+        <option value="team6">กลุ่มที่ 6</option>
+    </select>
+    <button class="btn btn-start" onclick="startMission()">เริ่มเกมเลย!</button>
+</div>
+
+<div class="container" id="main-container">
+    <header>
+        <h1 id="team-display-name">Math Escape: ภารกิจไขปริศนา</h1>
+        <p class="subtitle">คำแนะนำ: แบ่งหน้าที่กันให้ดี ใครคิด ใครจด ใครกดส่งคำตอบ สู้ๆ!</p>
+        <div class="timer-box" id="timer">00:00</div>
+    </header>
+
+    <div class="phase" id="phase1">
+        <div class="phase-title">ด่านที่ 1: นับอิฐปวดหัว</div>
+        <div class="story-text">
+            <strong>เรื่องมีอยู่ว่า...</strong> ร้านคาเฟ่กำลังก่อกำแพงอิฐแดง ชั้นล่างสุดมี 55 ก้อน แล้วค่อยๆ วางสับหว่างขึ้นไปเรื่อยๆ <br>
+            ลองกดปุ่มสั่งเครนวางอิฐดูสิ สังเกตดูว่าแต่ละชั้นมันลดลงทีละเท่าไหร่ แล้วเติมตัวเลขให้ครบนะ
+        </div>
+        <button class="btn btn-build" id="btn-lay-brick" onclick="layNextRow()">🏗️ กดเพื่อวางอิฐชั้นต่อไป</button>
+        <div class="wall-simulator" id="wall-container">
+            <div class="overload-warning" id="overload-msg"> อ้าวเฮ้ย! เครนพังเฉยเลย<br><span style="font-size: 14px; font-weight: normal; color: #333;">สงสัยต้องใช้สูตรคณิตศาสตร์คำนวณต่อเองแล้วล่ะ</span></div>
+        </div>
+        <div class="input-group">
+            <div>ชั้น 1 = <input type="number" id="p1-a1" placeholder="a1">
+            ชั้น 2 = <input type="number" id="p1-a2" placeholder="a2"></div>
+            <div>ชั้น 3 = <input type="number" id="p1-a3" placeholder="a3">
+            ➡️ <strong>ลดลงทีละ (d) = </strong> <input type="number" id="p1-d" placeholder="d"></div>
+            <button class="btn btn-hack" onclick="checkP1()">ส่งคำตอบ</button>
+        </div>
+        <div class="feedback" id="fb-p1"></div>
+    </div>
+
+    <div class="phase locked" id="phase2">
+        <div class="phase-title">ด่านที่ 2: พยากรณ์ชั้นที่ 25</div>
+        <div class="story-text">
+            <strong>เครนพังไปแล้ว!</strong> เราคงมานั่งนับทีละชั้นไม่ไหว ลองใช้สูตรลำดับเลขคณิตช่วยดูสิ: <strong>a<sub>n</sub> = a<sub>1</sub> + (n - 1)d</strong><br>
+            คิดว่า "ชั้นที่ 25" จะมีอิฐเหลือกี่ก้อน? หยิบกระดาษทดขึ้นมาเลย!
+        </div>
+        <div class="input-group">
+            จำนวนอิฐชั้นที่ 25 = <input type="number" id="p2-ans" placeholder="ก้อน">
+            <button class="btn btn-hack" onclick="checkP2()">ตรวจคำตอบ</button>
+        </div>
+        <div class="feedback" id="fb-p2"></div>
+    </div>
+
+    <div class="phase locked" id="phase3">
+        <div class="phase-title">ด่านที่ 3: กำแพงนี้สูงเท่าไหร่?</div>
+        <div class="story-text">
+            <strong>ใกล้เสร็จแล้ว!</strong> อิฐชั้นบนสุดเหลือแค่ 8 ก้อนพอดีเป๊ะ แล้วอิฐแต่ละก้อนหนา 3 เซนติเมตร <br>
+            <span style="color: #fde047; font-weight: bold;">ระวังให้ดี!</span> ช่างก่อสร้างอยากรู้ความสูงรวมเป็น <strong>"เมตร"</strong> เท่านั้น อย่าเผลอตอบเป็นเซนติเมตรนะ!
+        </div>
+        <div class="input-group">
+            ความสูงรวม = <input type="number" id="p3-ans" step="0.01" placeholder="x.xx"> <strong>เมตร</strong>
+            <button class="btn btn-hack" onclick="checkP3()">ส่งงานช่าง</button>
+        </div>
+        <div class="feedback" id="fb-p3"></div>
+    </div>
+
+    <div class="phase locked" id="phase4">
+        <div class="phase-title">ด่านที่ 4: เรื่องเงินๆ ทองๆ</div>
+        <div class="story-text">
+            พักเรื่องกำแพงมาดูเรื่องเงินกันบ้าง!<br>
+            <strong>อาร์ม</strong> มีเงินเริ่ม 5,500 บาท ตั้งใจฝากเพิ่มเดือนละ 250 บาท <br>
+            <strong>โอม</strong> มีเงินเริ่ม 8,500 บาท ตั้งใจฝากเพิ่มเดือนละ 200 บาท <br>
+            ช่วยเขียนสมการเงินออมของทั้งคู่ให้อยู่ในรูป <strong>y = mx + c</strong> หน่อย (ให้ x เป็นจำนวนเดือน)
+        </div>
+        <div class="input-group column-mobile" style="flex-direction: column; align-items: flex-start;">
+            <div>สมการอาร์ม: y = <input type="number" id="p4-m1" placeholder="m"> x + <input type="number" id="p4-c1" placeholder="c"></div>
+            <div style="margin-top: 10px;">สมการโอม: y = <input type="number" id="p4-m2" placeholder="m"> x + <input type="number" id="p4-c2" placeholder="c"></div>
+            <button class="btn btn-hack" onclick="checkP4()">ยืนยันสมการ</button>
+        </div>
+        <div class="feedback" id="fb-p4"></div>
+    </div>
+
+    <div class="phase locked" id="phase5">
+        <div class="phase-title">ด่านที่ 5: ใครจะแซงใคร?</div>
+        <div class="story-text">
+            <strong>จุดพีคอยู่ตรงนี้:</strong> อาร์มจะเริ่มมีเงินเก็บ "มากกว่า" โอมเมื่อไหร่? <br>
+            ลองจับสมการสองคนมาเท่ากันดูก่อน เพื่อหาว่า <strong>เดือนที่เท่าไหร่ที่เงินเท่ากันพอดีเป๊ะ?</strong> แล้วค่อยตอบว่าเดือนไหนที่อาร์มเริ่มแซงโอม!
+        </div>
+        <div class="input-group">
+            <div style="text-align: left;">
+                1. เดือนที่เงิน <strong>เท่ากันพอดี</strong> : เดือนที่ <input type="number" id="p5-ans1" placeholder="x = ?"> <br>
+                2. เดือนแรกที่อาร์ม <strong>แซง</strong> โอม : เดือนที่ <input type="number" id="p5-ans2" placeholder="x + 1">
+            </div>
+            <button class="btn btn-hack" style="margin-left: auto;" onclick="checkP5()">คำนวณ!</button>
+        </div>
+        <div class="feedback" id="fb-p5"></div>
+        <div class="visualizer" id="vis-p5">
+            <div style="color: #fde047; margin-bottom: 10px;">ภาพจำลองกราฟ ณ เดือนที่ 60 (เงินเท่ากันพอดี):</div>
+            <div class="bar-container"><div class="bar-fill" style="width: 68%; background: #0ea5e9;">อาร์ม: 20,500 ฿</div></div>
+            <div class="bar-container"><div class="bar-fill" style="width: 68%; background: #db2777;">โอม: 20,500 ฿</div></div>
+        </div>
+    </div>
+
+    <div class="phase locked" id="phase6">
+        <div class="phase-title">ด่านที่ 6: โลกแห่งความจริง (Final)</div>
+        <div class="story-text">
+            <strong>ด่านสุดท้ายแล้ว!</strong> อาร์มอยากเอาเงินไปซื้อโน้ตบุ๊กราคา 25,800 บาท <br>
+            ถ้าแก้สมการจะได้เวลาประมาณ 81.2 เดือน แต่ในชีวิตจริงธนาคารไม่ให้ฝากเป็นเศษเดือนหรอกนะ! ต้องปัดขึ้นให้เต็มเดือน<br>
+            อยากรู้ว่า ในเดือนที่อาร์มกำเงินไปซื้อโน้ตบุ๊กได้สำเร็จ <strong>เขาจะมีเงินในบัญชีตอนนั้นรวมกี่บาท?</strong> (แอบใบ้ว่าต้องมีเงินทอนแน่ๆ)
+        </div>
+        <div class="input-group">
+            เงินรวมในบัญชีเดือนที่ซื้อได้ = <input type="number" id="p6-ans" placeholder="เงินบาท"> <strong>บาท</strong>
+            <button class="btn btn-hack" style="background-color: #facc15; color: #1e1b4b;" onclick="checkP6()">เคลียร์ด่านสุดท้าย!</button>
+        </div>
+        <div class="feedback" id="fb-p6"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAZZpLmQqWzba6xANwtvLYnlxUF2xVFnlw",
+        authDomain: "test8-26ca2.firebaseapp.com",
+        databaseURL: "https://test8-26ca2-default-rtdb.firebaseio.com",
+        projectId: "test8-26ca2",
+        storageBucket: "test8-26ca2.firebasestorage.app",
+        messagingSenderId: "330679832875",
+        appId: "1:330679832875:web:0f32e9829a355d59ff756e",
+        measurementId: "G-XF15F16DRK"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.updateServer = function(teamId, stage) {
+        set(ref(db, 'game_state/' + teamId), {
+            stage: stage,
+            timestamp: Date.now()
+        });
+    };
+</script>
+
+<script>
+    let myTeamId = "";
+    let timeElapsed = 0;
+    let timerInterval;
+
+    function startMission() {
+        const selectBox = document.getElementById('team-select');
+        myTeamId = selectBox.value;
+        const teamNameText = selectBox.options[selectBox.selectedIndex].text;
+        
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-container').style.display = 'block';
+        document.getElementById('team-display-name').innerText = "เกมไขปริศนา: " + teamNameText;
+
+        timerInterval = setInterval(() => {
+            timeElapsed++;
+            let m = Math.floor(timeElapsed / 60).toString().padStart(2, '0');
+            let s = (timeElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }, 1000);
+
+        if (window.updateServer) window.updateServer(myTeamId, 1);
+    }
+
+    function showFb(id, isSuccess, msg) {
+        let fb = document.getElementById(id);
+        fb.style.display = "block";
+        fb.className = "feedback " + (isSuccess ? "success" : "error");
+        fb.innerHTML = (isSuccess ? "✔️ " : "❌ ") + msg;
+    }
+
+    function unlockPhase(current, next) {
+        document.getElementById('phase' + current).classList.add('completed');
+        if (next) document.getElementById('phase' + next).classList.remove('locked');
+    }
+
+    let currentRow = 1;
+    let currentBricks = 55;
+    const wallContainer = document.getElementById('wall-container');
+
+    function renderRow(count) {
+        let rowDiv = document.createElement('div');
+        rowDiv.className = 'brick-row';
+        for(let i=0; i<count; i++) {
+            let brick = document.createElement('div');
+            brick.className = 'brick';
+            rowDiv.appendChild(brick);
+        }
+        wallContainer.appendChild(rowDiv);
+    }
+    renderRow(currentBricks);
+
+    function layNextRow() {
+        if(currentRow >= 5) {
+            document.getElementById('overload-msg').style.display = 'block';
+            document.getElementById('btn-lay-brick').disabled = true;
+            document.getElementById('btn-lay-brick').style.background = '#64748b';
+            document.getElementById('btn-lay-brick').innerText = "เครนเสียแล้วจ้า ไปต่อไม่ได้แล้ว";
+            return;
+        }
+        currentRow++;
+        currentBricks--;
+        renderRow(currentBricks);
+    }
+
+    function autoCompleteWall() {
+        document.getElementById('overload-msg').style.display = 'none';
+        while(currentBricks > 8) {
+            currentRow++;
+            currentBricks--;
+            renderRow(currentBricks);
+        }
+    }
+
+    function checkP1() {
+        let a1 = document.getElementById('p1-a1').value;
+        let a2 = document.getElementById('p1-a2').value;
+        let a3 = document.getElementById('p1-a3').value;
+        let d = document.getElementById('p1-d').value;
+        
+        if (a1 == "55" && a2 == "54" && a3 == "53" && d == "-1") {
+            showFb('fb-p1', true, "เป๊ะมาก! จับแพทเทิร์นได้แล้ว ลุยด่านต่อไปเลย");
+            unlockPhase(1, 2);
+            if (window.updateServer) window.updateServer(myTeamId, 2); 
+        } else {
+            showFb('fb-p1', false, "ยังไม่ถูกน้า ลองกดดูอิฐข้างบนแล้วนับดีๆ ว่ามันลดลงทีละเท่าไหร่ (อย่าลืมใส่เครื่องหมายลบตรงค่า d นะ)");
+        }
+    }
+
+    function checkP2() {
+        let ans = document.getElementById('p2-ans').value;
+        if (ans == "31") {
+            showFb('fb-p2', true, "ถูกต้อง! เก่งมากที่แทนค่าในสูตรได้ถูกเป๊ะ");
+            unlockPhase(2, 3);
+            if (window.updateServer) window.updateServer(myTeamId, 3);
+        } else {
+            showFb('fb-p2', false, "อ๊ะๆ ลองแทนค่า n = 25 ดูใหม่นะ ระวังตอนเอา (24) ไปคูณกับ (-1) ด้วยล่ะ");
+        }
+    }
+
+    function checkP3() {
+        let ans = document.getElementById('p3-ans').value;
+        if (ans == "1.44") {
+            showFb('fb-p3', true, "สุดยอด! ไม่โดนหลอกเรื่องหน่วยด้วย เอาภาพกำแพงเต็มๆ ไปดูเป็นรางวัลเลย");
+            autoCompleteWall(); 
+            unlockPhase(3, 4);
+            if (window.updateServer) window.updateServer(myTeamId, 4);
+        } else if (ans == "144") {
+            showFb('fb-p3', false, "เลขสวยแล้ว แต่เดี๋ยวก่อน! ช่างถามเป็น 'เมตร' นะ (100 ซม. = 1 เมตร จ้า)");
+        } else {
+            showFb('fb-p3', false, "ยังไม่ใช่จ้า ลองหาให้ได้ก่อนว่าอิฐมีทั้งหมดกี่ชั้น โดยแก้สมการ 8 = 55 + (n-1)(-1)");
+        }
+    }
+
+    function checkP4() {
+        let m1 = document.getElementById('p4-m1').value;
+        let c1 = document.getElementById('p4-c1').value;
+        let m2 = document.getElementById('p4-m2').value;
+        let c2 = document.getElementById('p4-c2').value;
+        
+        if (m1 == "250" && c1 == "5500" && m2 == "200" && c2 == "8500") {
+            showFb('fb-p4', true, "ตั้งสมการได้สวยงาม! ไปด่านต่อไปกันเลย");
+            unlockPhase(4, 5);
+            if (window.updateServer) window.updateServer(myTeamId, 5);
+        } else {
+            showFb('fb-p4', false, "ใจเย็นๆ ค่อยๆ ดูนะ ค่า m คือเงินที่เพิ่มขึ้นแต่ละเดือน ส่วน c คือเงินก้อนแรกที่มีอยู่ สลับกันหรือเปล่า?");
+        }
+    }
+
+    function checkP5() {
+        let ans1 = document.getElementById('p5-ans1').value;
+        let ans2 = document.getElementById('p5-ans2').value;
+        
+        if (ans1 == "60" && ans2 == "61") {
+            showFb('fb-p5', true, "เก่งมาก! หาจุดตัดกราฟเจอแล้ว แถมตอบถูกด้วยว่าเดือนไหนที่แซงกัน");
+            document.getElementById('vis-p5').style.display = "block";
+            unlockPhase(5, 6);
+            if (window.updateServer) window.updateServer(myTeamId, 6);
+        } else {
+            showFb('fb-p5', false, "คิดเลขผิดนิดนึงป่าว ลองตั้งสมการ 5500 + 250x = 8500 + 200x แล้วย้ายข้างหา x ใหม่ดูนะ");
+        }
+    }
+
+    function checkP6() {
+        let ans = document.getElementById('p6-ans').value;
+        if (ans == "26000") {
+            showFb('fb-p6', true, "เย้! ผ่านหมดแล้วววว ปรบมือให้ตัวเองรัวๆ เลย!");
+            clearInterval(timerInterval);
+            document.getElementById('timer').style.background = "#10b981";
+            document.getElementById('timer').style.borderColor = "#059669";
+            document.getElementById('phase6').classList.add('completed');
+            
+            if (window.updateServer) window.updateServer(myTeamId, 7); 
+            
+            setTimeout(() => {
+                alert(` จบเกมแล้ว!! เยี่ยมมากเลยกลุ่มของพวกเธอ ใช้เวลาทำไปทั้งหมด ${document.getElementById('timer').innerText} นาที\nคะแนนเต็ม 100 เอาไปเลย 1 ล้าน!`);
+            }, 1000);
+        } else if (ans == "25800") {
+            showFb('fb-p6', false, "ฮั่นแน่! นั่นมันราคาโน้ตบุ๊ก ลองคิดดูว่าเดือนที่ 82 อาร์มจะได้เงินในบัญชีเท่าไหร่ มันต้องมีเงินเหลือทอนสิ");
+        } else {
+            showFb('fb-p6', false, "ยังไม่เป๊ะนะ ลองเอา x = 82 เดือน ไปแทนค่าในสมการเงินของอาร์ม (5500 + 250x) ดูสิว่าจะได้กี่บาท");
+        }
+    }
+</script>
+
+</body>
+</html>
